@@ -1,0 +1,555 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Master</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .game-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .game-board {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .center-word {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #3498db;
+      margin: 20px 0;
+      letter-spacing: 3px;
+    }
+    
+    .highlight {
+      color: #e74c3c;
+      background-color: #ffecb3;
+      border-radius: 50%;
+      padding: 0 8px;
+    }
+    
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    input {
+      flex-grow: 1;
+      padding: 12px;
+      font-size: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+    
+    .score-time {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+    }
+    
+    .found-words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .word-chip {
+      background-color: #e0f7fa;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      color: #0097a7;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .word-definition {
+      cursor: pointer;
+      color: #0097a7;
+      font-size: 0.8rem;
+      background-color: #b2ebf2;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .definition-tooltip {
+      display: none;
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      max-width: 250px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+    }
+    
+    .rules {
+      background-color: #f8f9fa;
+      border-left: 5px solid #3498db;
+      padding: 15px;
+      margin-top: 30px;
+      border-radius: 0 5px 5px 0;
+    }
+    
+    .game-over {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .required-letter {
+      margin-top: 5px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    
+    .required-letter span {
+      font-weight: bold;
+      color: #e74c3c;
+    }
+    
+    .status-message {
+      text-align: center;
+      color: #e74c3c;
+      height: 20px;
+      margin-top: 5px;
+    }
+    
+    .loading {
+      text-align: center;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>Word Master</h1>
+    
+    <div class="score-time">
+      <div>Score: <span id="score">0</span></div>
+      <div>Time: <span id="time">60</span>s</div>
+    </div>
+    
+    <div class="game-board">
+      <div class="center-word" id="centerWord">STARTING</div>
+      <div class="required-letter">Required letter: <span id="requiredLetterDisplay">T</span></div>
+      
+      <div class="input-area">
+        <input type="text" id="wordInput" placeholder="Enter a word..." autocomplete="off">
+        <button id="submitBtn">Submit</button>
+      </div>
+      
+      <div class="status-message" id="statusMessage"></div>
+      <div class="loading" id="loading">
+        <span class="spinner"></span> Checking word...
+      </div>
+    </div>
+    
+    <div>
+      <h3>Found Words:</h3>
+      <div class="found-words" id="foundWords"></div>
+    </div>
+    
+    <div class="game-over" id="gameOver" style="display: none;">
+      <h2>Game Over!</h2>
+      <p>Final Score: <span id="finalScore">0</span></p>
+      <button id="newGameBtn">New Game</button>
+    </div>
+    
+    <div class="rules">
+      <h3>Rules</h3>
+      <p>Form words using the letters in the center word. Rules:</p>
+      <ul>
+        <li>Words must be at least 3 letters long</li>
+        <li>You can use each letter in the center word as many times as it appears</li>
+        <li>The highlighted letter must be used in every word</li>
+        <li>Find as many words as possible before time runs out!</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Game variables
+    let score = 0;
+    let timeLeft = 60;
+    let centerWord = '';
+    let requiredLetter = '';
+    let foundWords = [];
+    let timer;
+    let wordDefinitions = {};
+    
+    // DOM elements
+    const scoreElement = document.getElementById('score');
+    const timeElement = document.getElementById('time');
+    const centerWordElement = document.getElementById('centerWord');
+    const requiredLetterDisplay = document.getElementById('requiredLetterDisplay');
+    const wordInput = document.getElementById('wordInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const loadingElement = document.getElementById('loading');
+    const foundWordsElement = document.getElementById('foundWords');
+    const gameOverElement = document.getElementById('gameOver');
+    const finalScoreElement = document.getElementById('finalScore');
+    const newGameBtn = document.getElementById('newGameBtn');
+    
+    // Word lists for center words
+const possibleCenterWords = [
+  'STARTING', 'CREATIVE', 'BUILDING', 'FOOTBALL', 'COMPUTER', 
+  'VACATION', 'MOUNTAIN', 'LANGUAGE', 'PAINTING', 'SUNSHINE',
+  'CHAMPION', 'WHISPERS', 'DREAMING', 'FESTIVAL', 'TREASURE',
+  'ABSOLUTE', 'BEATIFIC', 'CAFFEINE', 'DEVIATOR', 'ELEVATED',
+  'FEASIBLE', 'GOALPOST', 'HOARDING', 'IDEALISM', 'JOURNALS',
+  'KINDLIER', 'LEISURED', 'MAINTAIN', 'NOTATION', 'OBLIGATE',
+  'PARADISE', 'RELIANCE', 'SEASONAL', 'TRAINING', 'UNFAIRLY',
+  'VANDALIC', 'WAVERING', 'ACOUSTIC', 'BLEAKISH', 'COASTING',
+  'DEFEATED', 'EMPLOYEE', 'FRIENDLY', 'GLOATING', 'HEAVIEST',
+  'IMPOSING', 'JAUNDICE', 'KNEADING', 'LEAFIEST', 'MEASURED',
+  'NEUTRINO', 'OPERATOR', 'PEACEFUL', 'REASONED', 'SHOOTING',
+  'TEACHING', 'UNGAINLY', 'VINEYARD', 'WOUNDIER', 'AERATING',
+  'BOASTFUL', 'CANOODLE', 'DETAINEE', 'ENABLING', 'FLOATIER',
+  'GRAINIER', 'HEADLINE', 'INCREASE', 'JOVIALLY', 'KINDLING',
+  'LEAKIEST', 'MEANDERS', 'NOISIEST', 'OVERPAID', 'PLEASING',
+  'REGAINED', 'STEADIER', 'TOASTING', 'UNIFORMLY', 'VAPORISE',
+  'WHEEZIER', 'ALIENATE', 'BREADING', 'CHEATING', 'DILUTING',
+  'EVADABLE', 'FRAILTY', 'GREASIER', 'HOISTING', 'INFLATOR',
+  'JUBILANT', 'KNOTTIER', 'LEAPFROG', 'MISTREAT', 'NOVELIST',
+  'OVERSEER', 'POACHING', 'RETAILING', 'SWEATIER', 'TREADING',
+  'UNRELIED', 'VITAMINS', 'WINDIEST', 'ANIMATOR', 'BLOODIER',
+  'CLEARING', 'DOMINATE', 'EXHALING', 'FROSTIER', 'GLEAMING',
+  'HEARINGS', 'INSULATE', 'JOINTURE', 'KNOCKOUT', 'LEAVINGS',
+  'MOANINGS', 'NEEDIEST', 'OVERHEAD', 'PREAMBLE', 'ROASTING',
+  'STRAINED', 'TRAILING', 'UNVOICED', 'VOLATILE', 'WORRYING',
+  'AQUATICS', 'BROADEST', 'COINAGES', 'DEFEATOR', 'EXPOSURE',
+  'FAIRYTALE', 'GROOMING', 'HOARDERS', 'INHALERS', 'JUDICIAL',
+  'KIDNAPER', 'LOAFINGS', 'MEALTIME', 'NUISANCE', 'OVERLAND',
+  'PREADAPT', 'REHEATED', 'SUITABLE', 'TRUANTRY', 'UNSEALED',
+  'VANDALISE', 'WAILINGS', 'AGITATOR', 'BRAINIER', 'COAUTHOR',
+  'DIAMETER', 'ELOQUENT', 'FEASTING', 'GLOOMIER', 'HEATEDLY',
+  'INTIMATE', 'JALOUSIE', 'KOSHERED', 'LIONISED', 'MARINATE',
+  'NOBELIUM', 'OVERLOAD', 'PEASANTS', 'REJOICES', 'SNEAKIER',
+  'TRIANGLE', 'UNBIASED', 'VACUOLED', 'WREATHED', 'ABLATIVE',
+  'BRIEFEST', 'CREAKIER', 'DISAGREE', 'EUPHORIC', 'FREIGHTS',
+  'GROANING', 'HUMANOID', 'ISOLATOR', 'JUDGMENT', 'KINDRED',
+  'LATERITE', 'MOTIONED', 'NEONATAL', 'OVERCOAT', 'PATIENCE',
+  'RELIABLY', 'STEALING', 'TROUBLED', 'UNVARIED', 'VAPOROUS',
+  'WEARIEST', 'ACTUATOR', 'BLEATING', 'CRUISERS', 'DEMEANOR',
+  'EVOCABLE', 'FURLOUGH', 'GRIEVOUS', 'HINDMOST', 'INVOLUTE',
+  'JACKBOOT', 'KILOBYTE', 'LOITERED', 'MODERATE', 'NURTURED',
+  'OUTWEIGH', 'PIRATING', 'RATIONED', 'SOUNDEST', 'TUNEFUL',
+  'UPROOTAL', 'VORTICES', 'WILLOWED'
+];
+    // Letter frequency counter
+    function getLetterFrequency(word) {
+      const frequency = {};
+      for (const letter of word) {
+        frequency[letter] = (frequency[letter] || 0) + 1;
+      }
+      return frequency;
+    }
+    
+    // Check if word can be formed from center word letters
+    function canBeFormed(word, centerWord) {
+      const centerFreq = getLetterFrequency(centerWord);
+      const wordFreq = getLetterFrequency(word);
+      
+      for (const letter in wordFreq) {
+        if (!centerFreq[letter] || centerFreq[letter] < wordFreq[letter]) {
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    // Function to check if a word is valid using the Free Dictionary API
+    async function isValidWord(word) {
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+        
+        if (response.status === 200) {
+          const data = await response.json();
+          // Store definition for later use
+          if (data && data.length > 0 && data[0].meanings && data[0].meanings.length > 0) {
+            const firstDefinition = data[0].meanings[0].definitions[0].definition;
+            wordDefinitions[word] = firstDefinition;
+          } else {
+            wordDefinitions[word] = "No definition available";
+          }
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        console.error("Error checking word:", error);
+        return false;
+      }
+    }
+    
+    // Function to highlight the required letter in the center word
+    function highlightCenterWord(word, letterPosition) {
+      let result = '';
+      for (let i = 0; i < word.length; i++) {
+        if (i === letterPosition) {
+          result += '<span class="highlight">' + word[i] + '</span>';
+        } else {
+          result += word[i];
+        }
+      }
+      return result;
+    }
+    
+    // Initialize the game
+    function initGame() {
+      score = 0;
+      timeLeft = 60;
+      foundWords = [];
+      wordDefinitions = {};
+      scoreElement.textContent = score;
+      timeElement.textContent = timeLeft;
+      gameOverElement.style.display = 'none';
+      statusMessage.textContent = '';
+      wordInput.disabled = false;
+      submitBtn.disabled = false;
+      
+      // Select a random center word
+      centerWord = possibleCenterWords[Math.floor(Math.random() * possibleCenterWords.length)];
+      
+      // Middle letter is required
+      const middlePosition = Math.floor(centerWord.length / 2);
+      requiredLetter = centerWord[middlePosition].toLowerCase();
+      
+      // Display the center word with highlighted letter
+      centerWordElement.innerHTML = highlightCenterWord(centerWord, middlePosition);
+      requiredLetterDisplay.textContent = requiredLetter.toUpperCase();
+      
+      // Clear found words
+      foundWordsElement.innerHTML = '';
+      
+      // Clear input
+      wordInput.value = '';
+      wordInput.focus();
+      
+      // Start timer
+      clearInterval(timer);
+      timer = setInterval(updateTimer, 1000);
+    }
+    
+    // Update timer
+    function updateTimer() {
+      timeLeft--;
+      timeElement.textContent = timeLeft;
+      
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }
+    
+    // Show status message
+    function showStatus(message, isError = false) {
+      statusMessage.textContent = message;
+      statusMessage.style.color = isError ? '#e74c3c' : '#2ecc71';
+      
+      // Clear message after 2 seconds
+      setTimeout(() => {
+        statusMessage.textContent = '';
+      }, 2000);
+    }
+    
+    // Submit word
+    async function submitWord() {
+      const word = wordInput.value.trim().toUpperCase();
+      
+      // Clear input immediately for better UX
+      wordInput.value = '';
+      
+      // Basic validation
+      if (word.length < 3) {
+        showStatus('Words must be at least 3 letters long!', true);
+        return;
+      }
+      
+      // Check if word contains required letter
+      if (!word.includes(requiredLetter.toUpperCase())) {
+        showStatus(`Words must contain the letter "${requiredLetter.toUpperCase()}"!`, true);
+        return;
+      }
+      
+      // Check if word was already found
+      if (foundWords.includes(word)) {
+        showStatus('You already found that word!', true);
+        return;
+      }
+      
+      // Check if word can be formed using the letters in the center word
+      if (!canBeFormed(word, centerWord)) {
+        showStatus(`Word cannot be formed from letters in "${centerWord}"!`, true);
+        return;
+      }
+      
+      // Disable input while checking
+      wordInput.disabled = true;
+      submitBtn.disabled = true;
+      loadingElement.style.display = 'block';
+      
+      // Check if word is valid using the dictionary API
+      const valid = await isValidWord(word);
+      
+      // Re-enable input
+      wordInput.disabled = false;
+      submitBtn.disabled = false;
+      loadingElement.style.display = 'none';
+      wordInput.focus();
+      
+      if (valid) {
+        // Add word to found words
+        foundWords.push(word);
+        
+        // Update score (1 point per letter)
+        score += word.length;
+        scoreElement.textContent = score;
+        
+        // Add word to display
+        const wordChip = document.createElement('div');
+        wordChip.classList.add('word-chip');
+        
+        const wordText = document.createElement('span');
+        wordText.textContent = word;
+        wordChip.appendChild(wordText);
+        
+        // Add definition tooltip if available
+        if (wordDefinitions[word]) {
+          const definitionIcon = document.createElement('span');
+          definitionIcon.classList.add('word-definition');
+          definitionIcon.textContent = '?';
+          definitionIcon.title = 'Click for definition';
+          
+          const tooltip = document.createElement('div');
+          tooltip.classList.add('definition-tooltip');
+          tooltip.textContent = wordDefinitions[word];
+          
+          definitionIcon.addEventListener('click', (e) => {
+            // Position the tooltip near the icon
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY + 20}px`;
+            
+            // Close tooltip when clicking elsewhere
+            const closeTooltip = () => {
+              tooltip.style.display = 'none';
+              document.removeEventListener('click', closeTooltip);
+            };
+            
+            // Add delay to prevent immediate closing
+            setTimeout(() => {
+              document.addEventListener('click', closeTooltip);
+            }, 100);
+            
+            e.stopPropagation();
+          });
+          
+          wordChip.appendChild(definitionIcon);
+          document.body.appendChild(tooltip);
+        }
+        
+        foundWordsElement.appendChild(wordChip);
+        showStatus(`Added "${word}" (+${word.length} points)!`);
+      } else {
+        showStatus(`"${word}" is not a valid English word!`, true);
+      }
+    }
+    
+    // End game
+    function endGame() {
+      clearInterval(timer);
+      gameOverElement.style.display = 'block';
+      finalScoreElement.textContent = score;
+      
+      // Disable input
+      wordInput.disabled = true;
+      submitBtn.disabled = true;
+    }
+    
+    // Event listeners
+    submitBtn.addEventListener('click', submitWord);
+    wordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        submitWord();
+      }
+    });
+    newGameBtn.addEventListener('click', initGame);
+    
+    // Start the game
+    initGame();
+  </script>
+</body>
+</html>
