@@ -38,7 +38,7 @@ Word Master is an engaging word game that challenges players to form words using
 
 ### File Structure
 - Single HTML file containing all code (HTML, CSS, JavaScript)
-- Includes a predefined list of 200 possible center words
+- Includes a predefined list of **218** possible center words
 
 ### Browser Compatibility
 - Works with all modern browsers (Chrome, Firefox, Safari, Edge)
